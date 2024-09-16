@@ -68,14 +68,10 @@ def updateFiles(args):
     os.remove('fs_files.zip')
     
 def getWordCount():
-    s = f"Running getWordCount()"
-    print(s)
     response = requests.get(url=host+'/wordcount')
     print(response.text)
     
 def getWordFreq():
-    s = f"Running getWordFreq()"
-    print(s)
     response = requests.get(url=host+'/wordfrequency')
     print(response.text)
 

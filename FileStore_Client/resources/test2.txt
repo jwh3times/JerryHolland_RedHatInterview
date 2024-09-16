@@ -1,1 +1,2 @@
-This is my test2 file
+This is line 1 of my test2 file.
+This is line 2 of my test2 file.

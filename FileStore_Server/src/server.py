@@ -33,18 +33,18 @@ def serviceFiles():
 
 @app.route("/wordcount", methods=["GET"])
 def wordcount():
-    return f"Total word count of all files is 4837"
+    return getWordCount()
 
 @app.route("/wordfrequency", methods=["GET"])
 def wordfrequency():
     orderBy = request.args.get('orderBy', default='ASC', type=str)
     limit = request.args.get('limit', default=10, type=int)
-    return f"Returning word frequencies in {orderBy} order and limited to {limit} words"
+    return getWordFreq()
     
 def saveFiles(request, update):
     zipped = request.files['file']
     try:
-        z = ZipFile(zipped, 'r', zipfile.ZIP_DEFLATED)
+        z = ZipFile(file=zipped, mode='r', compression=zipfile.ZIP_DEFLATED, metadata_encoding='utf-8')
     except:
         return "ERROR: Unable to create ZipFile object"
     
@@ -75,9 +75,31 @@ def deleteFiles(request):
     return "deleted files"
 
 def getWordCount():
-    print("getting word count")
-    return
+    files = getFiles()
+    result = ""
+    if (len(files) == 0):
+        return "No files currently stored"
+    for file in files:
+        f = open(app.config['UPLOAD_FOLDER'] + file, "rt")
+        words = [word for line in f for word in line.rstrip().split()]
+        result += f"{file} wordcount = {len(words)}\n"
+    return result[:-1]
+
+def myKey(t):
+    return t[1],t[0]
 
 def getWordFreq():
-    print("getting word frequency")
-    return
+    files = getFiles()
+    word_dict = {}
+    if (len(files) == 0):
+        return "No files currently stored"
+    for file in files:
+        f = open(app.config['UPLOAD_FOLDER'] + file, "rt")
+        words = [word for line in f for word in line.rstrip().split()]
+        for word in words:
+            if word[-1] == '.':
+                word = word[:-1]
+            word_dict.update({word: (word_dict.get(word) + 1) if word_dict.get(word) else 1})
+    print(word_dict)
+    word_list = sorted(word_dict.items(), key=myKey, reverse=False)
+    return word_list

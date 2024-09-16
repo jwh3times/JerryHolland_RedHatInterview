@@ -1,0 +1,4 @@
+*.py[cod]
+FileStore_Server/src/__pycache__/
+FileStore_Server/build/
+FileStore_Client/build/

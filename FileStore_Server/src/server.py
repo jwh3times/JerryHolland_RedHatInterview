@@ -1,5 +1,5 @@
 import os
-from flask import Flask, flash, jsonify, request
+from flask import Flask, request
 import pathlib
 import zipfile
 from zipfile import ZipFile
@@ -39,7 +39,7 @@ def wordcount():
 def wordfrequency():
     orderBy = request.args.get('orderBy', default='ASC', type=str)
     limit = request.args.get('limit', default=10, type=int)
-    return getWordFreq()
+    return getWordFreq(limit, orderBy)
     
 def saveFiles(request, update):
     zipped = request.files['file']
@@ -54,7 +54,7 @@ def saveFiles(request, update):
                 if pathlib.Path(os.path.join(app.config['UPLOAD_FOLDER']) + f.filename).is_file():
                     raise FileExistsError(f"{f.filename} already exists")
         except FileExistsError:
-            return f"ERROR: {f.filename} already exists"
+            return f"ERROR: {f.filename} already exists", 409
     
     try:
         ZipFile.extractall(z, os.path.join(app.config['UPLOAD_FOLDER']))
@@ -88,7 +88,8 @@ def getWordCount():
 def myKey(t):
     return t[1],t[0]
 
-def getWordFreq():
+def getWordFreq(limit:int, orderBy:str):
+    print(f"getWordFreq with limit={limit} and orderBy={orderBy}")
     files = getFiles()
     word_dict = {}
     if (len(files) == 0):
@@ -100,6 +101,6 @@ def getWordFreq():
             if word[-1] == '.':
                 word = word[:-1]
             word_dict.update({word: (word_dict.get(word) + 1) if word_dict.get(word) else 1})
-    print(word_dict)
-    word_list = sorted(word_dict.items(), key=myKey, reverse=False)
+    word_list = sorted(word_dict.items(), key=myKey, reverse=(orderBy[0].lower()=='d'))[:limit]
+    print(word_list)
     return word_list

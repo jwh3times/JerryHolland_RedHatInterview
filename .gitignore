@@ -1,4 +1,12 @@
+#Python bytecode
 *.py[cod]
-FileStore_Server/src/__pycache__/
+
+#Build directories
 FileStore_Server/build/
 FileStore_Client/build/
+
+#Server filestore
+FileStore_Server/resources/filestore
+
+#pycache
+**/__pycache__ /*

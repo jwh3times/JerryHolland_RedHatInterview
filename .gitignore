@@ -10,3 +10,6 @@ FileStore_Server/resources/filestore
 
 #pycache
 **/__pycache__ /*
+
+#VSCode
+.vscode/*

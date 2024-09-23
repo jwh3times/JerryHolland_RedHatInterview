@@ -14,7 +14,8 @@ RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # copy python project files from local to /jerry_holland_interview image working directory
-COPY . .
+COPY ./FileStore_Server ./
 
-# run the flask server  
-CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+# run the flask server
+EXPOSE 5000
+CMD [ "flask", "--app", "src/server.py", "run", "--host=0.0.0.0", "--port=5000"]

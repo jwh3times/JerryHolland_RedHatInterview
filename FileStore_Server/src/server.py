@@ -7,8 +7,8 @@ from zipfile import ZipFile
 import json
 import shutil
 
-UPLOAD_FOLDER = str(pathlib.Path(__file__).parent.parent.resolve()) + "\\resources\\filestore\\"
-FILE_SUMS_LOC = UPLOAD_FOLDER + "fileSums.json"
+UPLOAD_FOLDER = str(pathlib.Path(__file__).parent.parent.resolve().joinpath("resources").joinpath("filestore"))
+FILE_SUMS_LOC = str(pathlib.Path(UPLOAD_FOLDER).joinpath("fileSums.json"))
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -50,13 +50,13 @@ def wordfrequency():
     limit = request.args.get('limit', default=10, type=int)
     return getWordFreq(limit, orderBy)
 
-@app.route("/checkdupe", methods=["GET"])
-def checkForDupe():
+@app.route("/copydupe", methods=["POST"])
+def copyDupeIfExists():
     csum =  request.args.get('sha256', type=str)
     fn = request.args.get('fileName', type=str)
     dupeFile = findDupeFile(csum, fn) or False
     if dupeFile and dupeFile != fn:
-        shutil.copyfile(os.path.join(app.config['UPLOAD_FOLDER']) + dupeFile, os.path.join(app.config['UPLOAD_FOLDER']) + fn)
+        shutil.copyfile(os.path.join(app.config['UPLOAD_FOLDER'], dupeFile), os.path.join(app.config['UPLOAD_FOLDER'], fn))
         with open(os.path.join(app.config['FILE_SUMS_LOC']), 'r+', encoding='utf-8') as f:
             existing = json.load(f)
         removeFileNameFromCheckSums(fn, existing)
@@ -88,11 +88,11 @@ def saveFiles(request, update=False):
     try:
         for f in z.filelist:
             # if we are executing an 'add' command and the file exists then raise an error and return 409 status code
-            if not update and pathlib.Path(os.path.join(app.config['UPLOAD_FOLDER']) + f.filename).is_file():
+            if not update and pathlib.Path(os.path.join(app.config['UPLOAD_FOLDER'], f.filename)).is_file():
                 raise FileExistsError(f"{f.filename} already exists")
             else:
                 ZipFile.extract(z, f, os.path.join(app.config['UPLOAD_FOLDER']))
-                with open(os.path.join(app.config['UPLOAD_FOLDER']) + f.filename, 'rb') as file:
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], f.filename), 'rb') as file:
                     sha256Sum = hashlib.file_digest(file, 'sha256').hexdigest()
                 try:
                     with open(os.path.join(app.config['FILE_SUMS_LOC']), 'r', encoding='utf-8') as filesums_r:
@@ -136,7 +136,8 @@ def getFiles():
         files = os.listdir(app.config['UPLOAD_FOLDER'])
 
         # remove our internal json file from the return object
-        files.remove("fileSums.json")
+        if "fileSums.json" in files:
+            files.remove("fileSums.json")
 
         return sorted(files)
     except FileNotFoundError:
@@ -159,11 +160,11 @@ def deleteFiles(request):
         for filename in filenames:
             # if 'filename' exists in filestore then calculate sha256 to help with removing
             # entry in fileSums.json
-            if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'] + filename)):
-                with open(os.path.join(app.config['UPLOAD_FOLDER']) + filename, 'rb') as f:
+            if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'rb') as f:
                     sha256Sum = hashlib.file_digest(f, 'sha256').hexdigest()
 
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'] + filename))
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
                 # load existing files from fileSums.json
                 with open(os.path.join(app.config['FILE_SUMS_LOC']), 'r+', encoding='utf-8') as f:
